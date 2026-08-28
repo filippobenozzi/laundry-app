@@ -21,14 +21,30 @@
       "tintColor": "1C1C1E",
       "category": "utilities",
       "screenshots": [],
-      "versions": [],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "buildVersion": "3",
+          "date": "2026-08-28T18:40:32Z",
+          "localizedDescription": "Bucato 1.0.0",
+          "downloadURL": "https://github.com/filippobenozzi/laundry-app/releases/download/v1.0.0/Bucato.ipa",
+          "size": 5076625,
+          "sha256": "3cd8ca1164fdb8b4670f597479ec418c17c12d84c339905e0ffecc1bbf1ad297",
+          "minOSVersion": "17.0"
+        }
+      ],
       "appPermissions": {
         "entitlements": [],
         "privacy": {
           "NSCameraUsageDescription": "Serve per inquadrare l'etichetta del capo e leggerne composizione e simboli.",
           "NSPhotoLibraryUsageDescription": "Serve per scegliere la foto di un'etichetta già scattata."
         }
-      }
+      },
+      "version": "1.0.0",
+      "versionDate": "2026-08-28T18:40:32Z",
+      "versionDescription": "Bucato 1.0.0",
+      "downloadURL": "https://github.com/filippobenozzi/laundry-app/releases/download/v1.0.0/Bucato.ipa",
+      "size": 5076625
     }
   ],
   "news": []
