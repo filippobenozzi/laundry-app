@@ -69,7 +69,9 @@ enum LabelAnalyzer {
     static func upright(_ image: UIImage) -> CGImage? {
         guard image.imageOrientation != .up else { return image.cgImage }
         let format = UIGraphicsImageRendererFormat.default()
-        format.scale = 1
+        // Redraw at the photo's own resolution: reading a label needs every pixel.
+        format.scale = image.scale
+        format.opaque = true
         let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
         let redrawn = renderer.image { _ in
             image.draw(in: CGRect(origin: .zero, size: image.size))

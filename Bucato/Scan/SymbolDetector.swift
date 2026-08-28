@@ -47,6 +47,9 @@ enum SymbolDetector {
         let maxSide = max(shortSide * 0.85, longSide * 0.30)
 
         var found: [(symbol: DetectedSymbol, component: BinaryImage.Component)] = []
+        // Every blob that was worth looking at, matched or not: printed words are
+        // told apart from a row of symbols by how many of their neighbours matched.
+        var considered: [BinaryImage.Component] = []
 
         for component in components {
             let width = Double(component.width), height = Double(component.height)
@@ -56,6 +59,10 @@ enum SymbolDetector {
             guard Double(component.pixels) < width * height * 0.72 else { continue }
             guard component.minX > 0, component.minY > 0,
                   component.maxX < binary.width - 1, component.maxY < binary.height - 1 else { continue }
+            // Marks inside another shape are read as part of it, not on their own.
+            guard !components.contains(where: { $0.pixels > component.pixels && $0.contains(component) })
+            else { continue }
+            considered.append(component)
 
             let crossed = isCrossed(binary, component)
             guard let silhouette = binary.silhouette(of: component),
@@ -124,7 +131,7 @@ enum SymbolDetector {
             found.append((DetectedSymbol(symbol: symbol, confidence: confidence, source: .immagine, box: box), component))
         }
 
-        return prune(found)
+        return prune(found, considered: considered)
     }
 
     // MARK: - Marks
@@ -354,8 +361,14 @@ enum SymbolDetector {
     }
 
     /// Drops the frame printed around a row of symbols, anything sitting inside an
-    /// accepted symbol, and the odd blob that is nowhere near the others in size.
-    private static func prune(_ found: [(symbol: DetectedSymbol, component: BinaryImage.Component)]) -> [DetectedSymbol] {
+    /// accepted symbol, and — the one that matters on a real label — the letters of
+    /// the printed text. An `O` is a circle and a `D` is close to one; what gives a
+    /// word away is the company it keeps. Blobs are grouped into the lines they sit
+    /// on, and a line is kept only if most of what is on it turned out to be a
+    /// symbol. In a row of care symbols nearly everything matches; in "COTONE"
+    /// almost nothing does.
+    private static func prune(_ found: [(symbol: DetectedSymbol, component: BinaryImage.Component)],
+                              considered: [BinaryImage.Component]) -> [DetectedSymbol] {
         guard !found.isEmpty else { return [] }
 
         var kept = found.filter { candidate in
@@ -368,7 +381,16 @@ enum SymbolDetector {
                 other.component.pixels > candidate.component.pixels && other.component.contains(candidate.component)
             }
         }
-        guard kept.count > 2 else { return kept.map(\.symbol) }
+
+        for band in bands(of: considered) {
+            let onBand = kept.filter { candidate in band.contains { same($0, candidate.component) } }
+            guard !onBand.isEmpty else { continue }
+            let rate = Double(onBand.count) / Double(band.count)
+            if rate < 0.55 {
+                kept.removeAll { candidate in onBand.contains { same($0.component, candidate.component) } }
+            }
+        }
+        guard kept.count > 2 else { return kept.sorted { $0.component.minX < $1.component.minX }.map(\.symbol) }
 
         let heights = kept.map { Double($0.component.height) }.sorted()
         let median = heights[heights.count / 2]
@@ -376,5 +398,30 @@ enum SymbolDetector {
             .filter { abs(Double($0.component.height) - median) < median * 0.6 }
             .sorted { $0.component.minX < $1.component.minX }
             .map(\.symbol)
+    }
+
+    /// Groups blobs into the horizontal lines they sit on.
+    private static func bands(of components: [BinaryImage.Component]) -> [[BinaryImage.Component]] {
+        let sorted = components.sorted { $0.minY < $1.minY }
+        var bands: [[BinaryImage.Component]] = []
+        for component in sorted {
+            if let index = bands.firstIndex(where: { band in
+                band.contains { overlapsVertically($0, component) }
+            }) {
+                bands[index].append(component)
+            } else {
+                bands.append([component])
+            }
+        }
+        return bands
+    }
+
+    private static func overlapsVertically(_ a: BinaryImage.Component, _ b: BinaryImage.Component) -> Bool {
+        let overlap = min(a.maxY, b.maxY) - max(a.minY, b.minY)
+        return Double(overlap) > Double(min(a.height, b.height)) * 0.5
+    }
+
+    private static func same(_ a: BinaryImage.Component, _ b: BinaryImage.Component) -> Bool {
+        a.minX == b.minX && a.minY == b.minY && a.maxX == b.maxX && a.maxY == b.maxY
     }
 }

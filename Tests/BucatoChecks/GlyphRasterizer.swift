@@ -1,4 +1,5 @@
 import CoreGraphics
+import CoreText
 import Foundation
 
 /// Draws care symbols into a bitmap, the way a label prints them, so the detector
@@ -49,6 +50,49 @@ enum GlyphRasterizer {
             }
         }
 
+        return Sheet(image: context.makeImage()!, boxes: boxes, specs: specs)
+    }
+
+    /// A whole care label: the printed lines first, the row of symbols underneath.
+    /// The text matters — its letters are what the detector has to resist reading
+    /// as symbols.
+    static func labelSheet(text: [String], specs: [GlyphSpec], width: CGFloat = 900) -> Sheet {
+        let symbolSize: CGFloat = 96
+        let height = 60 + CGFloat(text.count) * 46 + symbolSize * 1.4 + 50
+        let context = CGContext(data: nil, width: Int(width), height: Int(height), bitsPerComponent: 8,
+                                bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+                                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        context.setFillColor(gray: 1, alpha: 1)
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        context.translateBy(x: 0, y: height)
+        context.scaleBy(x: 1, y: -1)
+
+        var y: CGFloat = 40
+        for line in text {
+            let font = CTFontCreateWithName("Helvetica" as CFString, 30, nil)
+            let attributed = NSAttributedString(string: line, attributes: [
+                kCTFontAttributeName as NSAttributedString.Key: font,
+                kCTForegroundColorAttributeName as NSAttributedString.Key: CGColor(gray: 0, alpha: 1)])
+            let drawn = CTLineCreateWithAttributedString(attributed)
+            context.saveGState()
+            context.translateBy(x: 44, y: y + 30)
+            context.scaleBy(x: 1, y: -1)
+            context.textPosition = .zero
+            CTLineDraw(drawn, context)
+            context.restoreGState()
+            y += 46
+        }
+
+        let spacing: CGFloat = 40
+        let total = CGFloat(specs.count) * symbolSize + CGFloat(max(0, specs.count - 1)) * spacing
+        var x = (width - total) / 2
+        var boxes: [CGRect] = []
+        for spec in specs {
+            let rect = CGRect(x: x, y: y + 16, width: symbolSize, height: symbolSize * 1.35)
+            boxes.append(rect)
+            GlyphRaster.draw(spec, in: rect, context: context)
+            x += symbolSize + spacing
+        }
         return Sheet(image: context.makeImage()!, boxes: boxes, specs: specs)
     }
 

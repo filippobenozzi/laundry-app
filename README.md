@@ -55,23 +55,28 @@ lavaggio sono un alfabeto piccolo e rigido, quindi l'app li **misura**.
 3. **Componenti connesse** — le macchie di inchiostro vengono etichettate con
    union-find a 8 vicini e filtrate per dimensione, proporzioni e «vuotezza»: un
    simbolo è un contorno, non un blocco pieno.
-4. **Sagoma** — il contorno viene dilatato di un pixel per chiudere le
+4. **Righe** — una `O` è un cerchio e una `D` gli somiglia parecchio, quindi le
+   lettere della composizione stampata verrebbero lette come simboli. A tradirle è
+   la compagnia: le macchie vengono raggruppate nella riga su cui stanno, e una riga
+   si tiene solo se la maggior parte di ciò che c'è sopra si è rivelato un simbolo.
+   In una riga di simboli combacia quasi tutto, in `COTONE` quasi niente.
+5. **Sagoma** — il contorno viene dilatato di un pixel per chiudere le
    interruzioni della stampa, poi si allaga l'esterno: quello che l'acqua non
    raggiunge è l'interno del simbolo.
-5. **Misura** — la sagoma diventa sedici numeri (quanto inchiostro c'è in ognuna di
+6. **Misura** — la sagoma diventa sedici numeri (quanto inchiostro c'è in ognuna di
    sedici fasce orizzontali), più sedici scostamenti laterali e il rapporto di
    riempimento. È il descrittore che distingue una bacinella da un triangolo e —
    grazie agli scostamenti — un ferro da tutto ciò che è simmetrico.
-6. **Confronto** — il descrittore viene confrontato con quelli dei cinque contorni
+7. **Confronto** — il descrittore viene confrontato con quelli dei cinque contorni
    di riferimento, che l'app **si disegna da sola all'avvio** e misura con lo stesso
    identico codice. I simboli barrati hanno il loro set di riferimenti, perché una
    croce cambia troppo la sagoma per far finta di niente.
-7. **Segni interni** — pallini, trattini sotto, linee verticali e orizzontali,
+8. **Segni interni** — pallini, trattini sotto, linee verticali e orizzontali,
    cerchio dell'asciugatrice, mano, tratto d'ombra, vapore barrato: ognuno ha una
    regola geometrica. Il numero dentro la bacinella e la lettera dentro il cerchio
    li legge Vision, su un ritaglio ingrandito e con l'alfabeto ristretto a
    `30 40 50 60 70 95 P F W`.
-8. **Lettura** — la combinazione (contorno + segni) viene cercata nel catalogo. Se
+9. **Lettura** — la combinazione (contorno + segni) viene cercata nel catalogo. Se
    non c'è una corrispondenza esatta si prende la più vicina, e la confidenza cala:
    sotto una certa soglia il simbolo viene mostrato come «da confermare».
 

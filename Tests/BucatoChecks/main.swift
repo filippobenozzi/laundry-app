@@ -183,6 +183,22 @@ for degrees in [-9.0, 5.0, 12.0] {
           "straightens a label shot \(Int(degrees))° off level")
 }
 
+let printed = GlyphRasterizer.labelSheet(
+    text: ["95% COTONE  5% ELASTAN",
+           "95% COTTON  5% ELASTANE",
+           "95% BAUMWOLLE  5% ELASTHAN",
+           "MADE IN PORTUGAL   ART. 4521/B"],
+    specs: row)
+let printedSize = CGSize(width: printed.image.width, height: printed.image.height)
+let printedIDs = SymbolDetector.detect(in: printed.image, readText: { _, region in
+    let centre = CGPoint(x: region.midX * printedSize.width, y: region.midY * printedSize.height)
+    for (index, box) in printed.boxes.enumerated() where box.contains(centre) { return printed.specs[index].text }
+    return nil
+}).symbols.map(\.symbol.id)
+print("     read: \(printedIDs)")
+check(printedIDs == ["wash-30-1", "bleach-none", "tumble-low", "iron-2", "pro-P"],
+      "the letters of a printed label are not mistaken for symbols")
+
 var unread: [String] = []
 for symbol in CareSymbolCatalog.all {
     let sheet = GlyphRasterizer.sheet([symbol.glyph])
