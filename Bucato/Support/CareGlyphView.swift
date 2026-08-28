@@ -42,6 +42,8 @@ struct CareGlyphView: View {
 struct CareSymbolRow: View {
     let symbol: CareSymbol
     var footnote: String?
+    /// In a list you are choosing from, the name is enough.
+    var compact = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
@@ -51,10 +53,12 @@ struct CareSymbolRow: View {
                 Text(symbol.title)
                     .font(.body.weight(.medium))
                     .foregroundStyle(Theme.ink)
-                Text(symbol.meaning)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.muted)
-                    .fixedSize(horizontal: false, vertical: true)
+                if !compact {
+                    Text(symbol.meaning)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 if let footnote {
                     Text(footnote)
                         .font(.caption)

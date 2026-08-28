@@ -33,7 +33,7 @@ struct SymbolPickerView: View {
                                 onPick(symbol)
                                 dismiss()
                             } label: {
-                                CareSymbolRow(symbol: symbol)
+                                CareSymbolRow(symbol: symbol, compact: true)
                                     .padding(.vertical, 12)
                                     .contentShape(Rectangle())
                             }
@@ -58,10 +58,10 @@ struct SymbolPickerView: View {
     private func shortTitle(_ family: CareFamily) -> String {
         switch family {
         case .lavaggio: return "Lava"
-        case .candeggio: return "Candeggia"
+        case .candeggio: return "Sbianca"
         case .asciugatura: return "Asciuga"
         case .stiratura: return "Stira"
-        case .professionale: return "Lavanderia"
+        case .professionale: return "Secco"
         }
     }
 }
