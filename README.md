@@ -23,6 +23,11 @@ di cui riprende l'idea di fondo, con qualche differenza:
 
 Bucato è un progetto indipendente, non affiliato con Laundry Lens né con i suoi autori.
 
+<div align="center">
+  <img src="docs/home.png" width="300" alt="La schermata iniziale di Bucato">
+  <img src="docs/etichetta.png" width="300" alt="La scheda di un capo letto">
+</div>
+
 ## Cosa fa
 
 - **Inquadri e basta** — lo scanner di sistema ritaglia e raddrizza l'etichetta, poi l'app cerca i simboli nella foto: bacinella, triangolo, quadrato, ferro e cerchio, con i loro pallini, trattini, linee e divieti. Sono 43 simboli, tutta la norma ISO 3758.
