@@ -154,7 +154,7 @@ struct CameraScannerView: View {
                 isReading = false
                 guard let analysis, !analysis.reading.isEmpty else {
                     Haptics.warning()
-                    message = "Non ho letto niente. Avvicinati, tieni l'etichetta distesa e accendi la torcia."
+                    message = "Non ho letto niente. Avvicinati fino a riempire il riquadro, tocca lo schermo per mettere a fuoco, e se c'è poca luce accendi la torcia."
                     return
                 }
                 Haptics.success()
