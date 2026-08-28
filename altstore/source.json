@@ -23,6 +23,16 @@
       "screenshots": [],
       "versions": [
         {
+          "version": "1.0.1",
+          "buildVersion": "5",
+          "date": "2026-08-28T18:43:53Z",
+          "localizedDescription": "Bucato 1.0.1",
+          "downloadURL": "https://github.com/filippobenozzi/laundry-app/releases/download/v1.0.1/Bucato.ipa",
+          "size": 5078641,
+          "sha256": "2a3e9e0991b9a8cb0098647fb229ab2cc3e5335240d8786f9d514ff4caa568dc",
+          "minOSVersion": "17.0"
+        },
+        {
           "version": "1.0.0",
           "buildVersion": "3",
           "date": "2026-08-28T18:40:32Z",
@@ -40,11 +50,11 @@
           "NSPhotoLibraryUsageDescription": "Serve per scegliere la foto di un'etichetta già scattata."
         }
       },
-      "version": "1.0.0",
-      "versionDate": "2026-08-28T18:40:32Z",
-      "versionDescription": "Bucato 1.0.0",
-      "downloadURL": "https://github.com/filippobenozzi/laundry-app/releases/download/v1.0.0/Bucato.ipa",
-      "size": 5076625
+      "version": "1.0.1",
+      "versionDate": "2026-08-28T18:43:53Z",
+      "versionDescription": "Bucato 1.0.1",
+      "downloadURL": "https://github.com/filippobenozzi/laundry-app/releases/download/v1.0.1/Bucato.ipa",
+      "size": 5078641
     }
   ],
   "news": []
