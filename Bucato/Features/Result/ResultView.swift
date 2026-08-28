@@ -16,6 +16,8 @@ struct ResultView: View {
     @State private var showSaveDialog = false
     @State private var name = ""
     @State private var savedName: String?
+    /// Asked once: whether the model is there does not change while a label is open.
+    @State private var canWriteNote = OnDeviceAdvisor.isReady
 
     private let garment: SavedGarment?
 
@@ -42,7 +44,7 @@ struct ResultView: View {
                 symbols
                 instructions
                 if !plan.warnings.isEmpty { warnings }
-                if useAppleIntelligence, OnDeviceAdvisor.isReady { intelligence }
+                if useAppleIntelligence, canWriteNote { intelligence }
                 footer
             }
             .padding(.horizontal, Theme.gutter)
@@ -372,7 +374,7 @@ struct ResultView: View {
 
     private func writeNote() async {
         note = nil
-        guard useAppleIntelligence, OnDeviceAdvisor.isReady, !reading.isEmpty else { return }
+        guard useAppleIntelligence, canWriteNote, !reading.isEmpty else { return }
         isWritingNote = true
         let written = await OnDeviceAdvisor.note(for: reading, plan: plan)
         isWritingNote = false

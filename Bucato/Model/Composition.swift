@@ -108,7 +108,11 @@ enum CompositionParser {
         }
         hits.sort { $0.range.location < $1.range.location }
 
-        var entries: [Entry] = []
+        // "80% cotone" reads forwards, "cotone 80%" backwards, and a label picks one
+        // style and sticks to it. Read both sides of every percentage first, then let
+        // the label as a whole decide which side to believe.
+        struct Sides { let hit: Hit; let forward: String?; let backward: String? }
+        var sides: [Sides] = []
         for (index, hit) in hits.enumerated() where hit.percentage > 0 && hit.percentage <= 100 {
             let afterStart = hit.range.location + hit.range.length
             let afterEnd = index + 1 < hits.count ? hits[index + 1].range.location : ns.length
@@ -119,13 +123,21 @@ enum CompositionParser {
                 ? ns.substring(with: NSRange(location: beforeStart, length: hit.range.location - beforeStart))
                 : ""
 
-            // "80% cotone" reads forwards, "cotone 80%" backwards. Try the side the
-            // number leans on first, then the other.
-            let candidates = firstFiberName(after: after).map { [$0] } ?? []
-            let fallbacks = lastFiberName(before: before).map { [$0] } ?? []
-            let ordered = candidates + fallbacks
+            sides.append(Sides(hit: hit, forward: firstFiberName(after: after), backward: lastFiberName(before: before)))
+        }
 
-            guard let name = ordered.first else { continue }
+        let forwardHits = sides.filter { $0.forward.flatMap(FiberCatalog.match) != nil }.count
+        let backwardHits = sides.filter { $0.backward.flatMap(FiberCatalog.match) != nil }.count
+        let readsBackwards = backwardHits > forwardHits
+
+        var entries: [Entry] = []
+        for side in sides {
+            let hit = side.hit
+            let ordered = readsBackwards
+                ? [side.backward, side.forward].compactMap { $0 }
+                : [side.forward, side.backward].compactMap { $0 }
+
+            guard let name = ordered.first(where: { FiberCatalog.match($0) != nil }) ?? ordered.first else { continue }
             let fiber = FiberCatalog.match(name)
             // An unrecognised word right next to a percentage is still worth showing,
             // but only if it looks like a fibre name and not like a size or a country.
@@ -134,7 +146,7 @@ enum CompositionParser {
             entries.append(Entry(
                 part: CompositionPart(percentage: hit.percentage, fiber: fiber, rawName: name.trimmingCharacters(in: .whitespaces)),
                 location: hit.range.location,
-                end: afterStart))
+                end: hit.range.location + hit.range.length))
         }
         return entries
     }

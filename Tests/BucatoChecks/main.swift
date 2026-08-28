@@ -30,6 +30,13 @@ check(simple.allParts.last?.fiber?.id == "poliestere" && simple.allParts.last?.p
 let reversed = CompositionParser.parse("COTONE 100%")
 check(reversed.allParts.count == 1 && reversed.allParts[0].fiber?.id == "cotone", "name before percentage")
 
+let namesFirst = CompositionParser.parse("COTONE 80% POLIESTERE 20%")
+check(namesFirst.allParts.count == 2, "names before percentages: two fibres")
+check(namesFirst.allParts.first?.fiber?.id == "cotone" && namesFirst.allParts.first?.percentage == 80,
+      "cotone keeps its 80%, not the poliestere that follows")
+check(namesFirst.allParts.last?.fiber?.id == "poliestere" && namesFirst.allParts.last?.percentage == 20,
+      "poliestere keeps its 20%")
+
 let multilingual = CompositionParser.parse("""
 95% COTONE 5% ELASTAN
 95% COTTON 5% ELASTANE
