@@ -7,6 +7,7 @@ struct CameraScannerView: View {
     var onRead: (LabelAnalyzer.Analysis) -> Void
     var onCancel: () -> Void
 
+    @Environment(\.scenePhase) private var scenePhase
     @State private var camera = CameraController()
     @State private var isReading = false
     @State private var message: String?
@@ -23,7 +24,17 @@ struct CameraScannerView: View {
                     .overlay { guide }
                     .onTapGesture { point in camera.focus(at: point) }
             case .denied:
-                unavailable("Bucato non ha accesso alla fotocamera. Puoi darglielo da Impostazioni › Bucato.")
+                unavailable("Bucato non ha accesso alla fotocamera.") {
+                    Button("Apri Impostazioni") {
+                        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                        UIApplication.shared.open(url)
+                    }
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 22)
+                    .padding(.vertical, 12)
+                    .background(.white, in: Capsule())
+                }
             case .unavailable:
                 unavailable("Su questo dispositivo non c'è una fotocamera utilizzabile. Scegli una foto dalla libreria.")
             case .idle:
@@ -41,6 +52,12 @@ struct CameraScannerView: View {
         .statusBarHidden()
         .preferredColorScheme(.dark)
         .task { await camera.start() }
+        // Coming back from Settings with permission just granted should not need a
+        // second trip through the screen.
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active, camera.state != .running else { return }
+            Task { await camera.start() }
+        }
         .onDisappear { camera.stop() }
     }
 
@@ -122,7 +139,7 @@ struct CameraScannerView: View {
         .padding(.bottom, 34)
     }
 
-    private func unavailable(_ text: String) -> some View {
+    private func unavailable(_ text: String, @ViewBuilder action: () -> some View = { EmptyView() }) -> some View {
         VStack(spacing: 16) {
             Image(systemName: "camera.fill").font(.largeTitle).foregroundStyle(.white.opacity(0.6))
             Text(text)
@@ -130,6 +147,7 @@ struct CameraScannerView: View {
                 .foregroundStyle(.white.opacity(0.8))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
+            action()
         }
     }
 
