@@ -59,9 +59,15 @@ enum SymbolDetector {
             guard Double(component.pixels) < width * height * 0.72 else { continue }
             guard component.minX > 0, component.minY > 0,
                   component.maxX < binary.width - 1, component.maxY < binary.height - 1 else { continue }
-            // Marks inside another shape are read as part of it, not on their own.
-            guard !components.contains(where: { $0.pixels > component.pixels && $0.contains(component) })
-            else { continue }
+            // Marks inside another shape are read as part of it, not on their own —
+            // but only when the shape around them is of comparable size. The edge of
+            // the label itself encloses everything printed on it, and that is not a
+            // reason to ignore the lot.
+            let boxArea = component.width * component.height
+            guard !components.contains(where: { parent in
+                parent.pixels > component.pixels && parent.contains(component)
+                    && parent.width * parent.height < boxArea * 12
+            }) else { continue }
             considered.append(component)
 
             let crossed = isCrossed(binary, component)
@@ -131,7 +137,12 @@ enum SymbolDetector {
             found.append((DetectedSymbol(symbol: symbol, confidence: confidence, source: .immagine, box: box), component))
         }
 
-        return prune(found, considered: considered)
+        // For the "is this a word or a row of symbols" statistic only the outermost
+        // shapes count: the stripes inside a triangle are part of it, not company.
+        let outermost = considered.filter { candidate in
+            !considered.contains { $0.pixels > candidate.pixels && $0.contains(candidate) }
+        }
+        return prune(found, considered: outermost)
     }
 
     // MARK: - Marks

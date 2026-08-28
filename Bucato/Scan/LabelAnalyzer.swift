@@ -25,7 +25,11 @@ enum LabelAnalyzer {
     }
 
     private static func perform(_ cgImage: CGImage) -> Analysis {
-        let detection = SymbolDetector.detect(in: cgImage) { image, region in
+        // A photo taken by hand holds the label at an angle. Flatten it first: the
+        // detector measures shapes, and perspective is the one distortion it cannot
+        // measure its way out of.
+        let flattened = LabelRectifier.rectify(cgImage) ?? cgImage
+        let detection = SymbolDetector.detect(in: flattened) { image, region in
             TextRecognizer.legend(in: image, region: region)
         }
         let text = TextRecognizer.text(in: detection.image)

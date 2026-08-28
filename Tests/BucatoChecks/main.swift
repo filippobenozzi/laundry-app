@@ -206,6 +206,33 @@ print("     read: \(printedIDs)")
 check(printedIDs == ["wash-30-1", "bleach-none", "tumble-low", "iron-2", "pro-P"],
       "the letters of a printed label are not mistaken for symbols")
 
+// A photo, not a scan: the label lies on a garment and leans away from the lens.
+func readPhotographed(lean: CGFloat) -> [String] {
+    let sheet = GlyphRasterizer.labelSheet(
+        text: ["95% COTONE  5% ELASTAN", "MADE IN PORTUGAL   ART. 4521/B"], specs: row)
+    let photo = GlyphRasterizer.photographed(sheet.image, lean: lean)
+    let flattened = LabelRectifier.rectify(photo) ?? photo
+    // The rectifier crops to the label, so positions are matched relative to it
+    // rather than to the photo that was handed in.
+    let width = CGFloat(sheet.image.width)
+    return SymbolDetector.detect(in: flattened, readText: { _, region in
+        let closest = sheet.boxes.enumerated().min {
+            abs($0.element.midX / width - region.midX) < abs($1.element.midX / width - region.midX)
+        }
+        guard let closest, abs(closest.element.midX / width - region.midX) < 0.08 else { return nil }
+        return sheet.specs[closest.offset].text
+    }).symbols.map(\.symbol.id)
+}
+
+let expectedRow = ["wash-30-1", "bleach-none", "tumble-low", "iron-2", "pro-P"]
+let onGarment = readPhotographed(lean: 0)
+print("     read: \(onGarment)")
+check(onGarment == expectedRow, "the edge of the label does not swallow what is printed on it")
+
+let leaning = readPhotographed(lean: 0.16)
+print("     read: \(leaning)")
+check(leaning == expectedRow, "a label leaning away from the lens is flattened first")
+
 var unread: [String] = []
 for symbol in CareSymbolCatalog.all {
     let sheet = GlyphRasterizer.sheet([symbol.glyph])

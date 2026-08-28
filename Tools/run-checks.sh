@@ -21,6 +21,8 @@ xcrun swiftc -O -o "$BUILD_DIR/checks" \
   Bucato/Scan/ShapeDescriptor.swift \
   Bucato/Scan/Deskew.swift \
   Bucato/Scan/SymbolDetector.swift \
+  Bucato/Scan/TextRecognizer.swift \
+  Bucato/Scan/LabelRectifier.swift \
   Tests/BucatoChecks/GlyphRasterizer.swift \
   Tests/BucatoChecks/main.swift
 

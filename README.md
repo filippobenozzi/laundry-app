@@ -30,7 +30,7 @@ Bucato è un progetto indipendente, non affiliato con Laundry Lens né con i suo
 
 ## Cosa fa
 
-- **Inquadri e basta** — lo scanner di sistema ritaglia e raddrizza l'etichetta, poi l'app cerca i simboli nella foto: bacinella, triangolo, quadrato, ferro e cerchio, con i loro pallini, trattini, linee e divieti. Sono 43 simboli, tutta la norma ISO 3758.
+- **Uno scatto** — apri la fotocamera, inquadri, scatti. Nessuna schermata di conferma da attraversare: la foto va dritta al lettore, e se non ha letto niente resti nella fotocamera e riprovi. L'app ritaglia da sola l'etichetta e la raddrizza, poi cerca i simboli: bacinella, triangolo, quadrato, ferro e cerchio, con i loro pallini, trattini, linee e divieti. Sono 43 simboli, tutta la norma ISO 3758.
 - **Composizione** — legge le percentuali anche quando l'etichetta le ripete in quattro lingue, tiene separati esterno, fodera e imbottitura, e riconosce una trentina di fibre con i loro nomi in italiano, inglese, francese, tedesco, spagnolo e portoghese. Ogni fibra è spiegata in una riga: cos'è, e cosa le fa male.
 - **Il consiglio** — un motore di regole incrocia i simboli con le fibre e produce il programma: massimo di temperatura, ciclo, giri di centrifuga, tipo di detersivo, asciugatura, ferro, lavanderia. Quando l'etichetta è più permissiva di quanto la fibra sopporti, l'app lo dice invece di scegliere di nascosto.
 - **Correggi tu** — ogni simbolo riconosciuto si può sostituire o togliere, e quelli incerti sono marcati «da confermare». Se l'etichetta è illeggibile o non c'è più, la composizione si scrive a mano.
@@ -49,39 +49,45 @@ linea, mai come immagine importata.
 Non c'è nessun modello addestrato e nessun file di rete neurale: i simboli di
 lavaggio sono un alfabeto piccolo e rigido, quindi l'app li **misura**.
 
-1. **Binarizzazione adattiva** — la foto passa in scala di grigi e ogni pixel viene
+1. **Ritaglio** — la foto arriva dalla mano di qualcuno, quindi l'etichetta è
+   storta e in prospettiva. Il rilevatore di rettangoli di Vision trova il
+   quadrilatero chiaro sul tessuto e una correzione prospettica lo riappiattisce.
+   È lo stesso lavoro che faceva lo scanner di sistema, senza i suoi due tocchi in
+   più. Se non c'è niente di rettangolare da trovare, si prosegue con la foto
+   così com'è.
+2. **Binarizzazione adattiva** — la foto passa in scala di grigi e ogni pixel viene
    confrontato con la media del suo intorno (metodo di Bradley), non con una soglia
    globale: è questo che permette di leggere un'etichetta sgualcita con un'ombra di
    traverso. Se l'etichetta è nera con stampa bianca, l'immagine viene invertita.
-2. **Raddrizzamento** — nessuno tiene il telefono dritto sopra una cucitura. L'app
+3. **Raddrizzamento** — nessuno tiene il telefono dritto sopra una cucitura. L'app
    prova le inclinazioni fra −16° e +16° e tiene quella che allinea l'inchiostro
    nelle righe più compatte, poi ruota la foto. Senza questo passaggio bastano 6°
    per far sbagliare tutto.
-3. **Componenti connesse** — le macchie di inchiostro vengono etichettate con
+4. **Componenti connesse** — le macchie di inchiostro vengono etichettate con
    union-find a 8 vicini e filtrate per dimensione, proporzioni e «vuotezza»: un
    simbolo è un contorno, non un blocco pieno.
-4. **Righe** — una `O` è un cerchio e una `D` gli somiglia parecchio, quindi le
+5. **Righe** — una `O` è un cerchio e una `D` gli somiglia parecchio, quindi le
    lettere della composizione stampata verrebbero lette come simboli. A tradirle è
    la compagnia: le macchie vengono raggruppate nella riga su cui stanno, e una riga
    si tiene solo se la maggior parte di ciò che c'è sopra si è rivelato un simbolo.
    In una riga di simboli combacia quasi tutto, in `COTONE` quasi niente.
-5. **Sagoma** — il contorno viene dilatato di un pixel per chiudere le
+6. **Sagoma** — il contorno viene dilatato di un pixel per chiudere le
    interruzioni della stampa, poi si allaga l'esterno: quello che l'acqua non
    raggiunge è l'interno del simbolo.
-6. **Misura** — la sagoma diventa sedici numeri (quanto inchiostro c'è in ognuna di
+7. **Misura** — la sagoma diventa sedici numeri (quanto inchiostro c'è in ognuna di
    sedici fasce orizzontali), più sedici scostamenti laterali e il rapporto di
    riempimento. È il descrittore che distingue una bacinella da un triangolo e —
    grazie agli scostamenti — un ferro da tutto ciò che è simmetrico.
-7. **Confronto** — il descrittore viene confrontato con quelli dei cinque contorni
+8. **Confronto** — il descrittore viene confrontato con quelli dei cinque contorni
    di riferimento, che l'app **si disegna da sola all'avvio** e misura con lo stesso
    identico codice. I simboli barrati hanno il loro set di riferimenti, perché una
    croce cambia troppo la sagoma per far finta di niente.
-8. **Segni interni** — pallini, trattini sotto, linee verticali e orizzontali,
+9. **Segni interni** — pallini, trattini sotto, linee verticali e orizzontali,
    cerchio dell'asciugatrice, mano, tratto d'ombra, vapore barrato: ognuno ha una
    regola geometrica. Il numero dentro la bacinella e la lettera dentro il cerchio
    li legge Vision, su un ritaglio ingrandito e con l'alfabeto ristretto a
    `30 40 50 60 70 95 P F W`.
-9. **Lettura** — la combinazione (contorno + segni) viene cercata nel catalogo. Se
+10. **Lettura** — la combinazione (contorno + segni) viene cercata nel catalogo. Se
    non c'è una corrispondenza esatta si prende la più vicina, e la confidenza cala:
    sotto una certa soglia il simbolo viene mostrato come «da confermare».
 
@@ -208,7 +214,8 @@ git tag v1.0.1 && git push origin v1.0.1
 Bucato/
   App/           punto d'ingresso e struttura a schede
   Model/         fibre, simboli, parser della composizione, motore del consiglio
-  Scan/          binarizzazione, raddrizzamento, componenti, riconoscimento simboli, Vision
+  Scan/          fotocamera, ritaglio prospettico, binarizzazione, raddrizzamento,
+                 componenti, riconoscimento simboli, Vision
   Intelligence/  riassunto con FoundationModels, opzionale
   Features/      le schermate
   Support/       geometria dei simboli, tema, disegno
@@ -222,8 +229,9 @@ altstore/        la sorgente che AltStore legge
 - Il riconoscimento dei simboli funziona su etichette **stampate e a fuoco**. Su
   etichette tessute, sbiadite o fotografate da lontano sbaglia: per questo ogni
   simbolo si può correggere a mano, e quelli dubbi sono marcati.
-- L'inclinazione viene corretta fino a circa ±16°; la prospettiva forte no. Lo
-  scanner di sistema aiuta parecchio: usalo invece della galleria quando puoi.
+- L'inclinazione viene corretta fino a circa ±16° e la prospettiva viene raddrizzata
+  quando l'etichetta si stacca abbastanza dal tessuto. Se il contrasto fra etichetta
+  e capo è debole il ritaglio non scatta, e allora conviene avvicinarsi.
 - Il consiglio è un'indicazione ragionata, non una garanzia. Su un capo a cui tieni,
   in caso di dubbio vince sempre il trattamento più delicato.
 

@@ -49,13 +49,13 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showSettings) { SettingsView() }
             .fullScreenCover(isPresented: $showScanner) {
-                DocumentScannerView(
-                    onFinish: { image in
+                CameraScannerView(
+                    onRead: { analysis in
                         showScanner = false
-                        read(image)
+                        outcome = ScanOutcome(reading: analysis.reading,
+                                              image: UIImage(cgImage: analysis.image))
                     },
                     onCancel: { showScanner = false })
-                .ignoresSafeArea()
             }
             .onChange(of: photoItem) { _, item in
                 guard let item else { return }
@@ -82,7 +82,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Inquadra l'etichetta.")
                 .font(.title2.weight(.semibold))
-            Text("Bucato legge la composizione e i simboli, spiega che fibre sono e ti dice come lavare il capo senza rovinarlo. Tutto sul telefono: le foto non escono da qui.")
+            Text("Uno scatto: Bucato ritaglia l'etichetta, legge la composizione e i simboli, spiega che fibre sono e ti dice come lavare il capo senza rovinarlo. Tutto sul telefono: le foto non escono da qui.")
                 .font(.subheadline)
                 .foregroundStyle(Theme.muted)
                 .fixedSize(horizontal: false, vertical: true)
@@ -96,7 +96,7 @@ struct HomeView: View {
                 Haptics.tap()
                 showScanner = true
             } label: {
-                Label("Inquadra l'etichetta", systemImage: "camera")
+                Label("Scatta e leggi", systemImage: "camera")
             }
             .buttonStyle(InkButtonStyle())
 

@@ -1,4 +1,5 @@
 import CoreGraphics
+import CoreImage
 import CoreText
 import Foundation
 
@@ -94,6 +95,33 @@ enum GlyphRasterizer {
             x += symbolSize + spacing
         }
         return Sheet(image: context.makeImage()!, boxes: boxes, specs: specs)
+    }
+
+    /// A label as it arrives from the camera: lying on a garment, its own edge in
+    /// the frame, and leaning away from the lens.
+    static func photographed(_ label: CGImage, lean: CGFloat = 0, background: CGFloat = 0.42,
+                             margin: CGFloat = 140) -> CGImage {
+        let width = CGFloat(label.width) + margin * 2
+        let height = CGFloat(label.height) + margin * 2
+        let context = CGContext(data: nil, width: Int(width), height: Int(height), bitsPerComponent: 8,
+                                bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+                                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        context.setFillColor(gray: background, alpha: 1)
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        context.draw(label, in: CGRect(x: margin, y: margin,
+                                       width: CGFloat(label.width), height: CGFloat(label.height)))
+        let flat = context.makeImage()!
+        guard lean > 0 else { return flat }
+
+        let filter = CIFilter(name: "CIPerspectiveTransform")!
+        filter.setValue(CIImage(cgImage: flat), forKey: kCIInputImageKey)
+        let inset = width * lean
+        filter.setValue(CIVector(x: inset, y: height), forKey: "inputTopLeft")
+        filter.setValue(CIVector(x: width - inset * 0.35, y: height - height * lean * 0.5), forKey: "inputTopRight")
+        filter.setValue(CIVector(x: width - inset * 0.1, y: 0), forKey: "inputBottomRight")
+        filter.setValue(CIVector(x: 0, y: height * lean * 0.35), forKey: "inputBottomLeft")
+        let output = filter.outputImage!
+        return CIContext().createCGImage(output, from: output.extent)!
     }
 
     /// Tilts a sheet, the way a label photographed in a hurry is tilted.
